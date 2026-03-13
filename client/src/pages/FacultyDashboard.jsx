@@ -4,6 +4,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { TrendingUp, BookOpen, Award, Target } from 'lucide-react';
 import { facultyAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import PageHero from '../components/PageHero';
+import ChartPanel from '../components/ChartPanel';
 
 const FacultyDashboard = () => {
   const [dashboard, setDashboard] = useState(null);
@@ -44,13 +46,21 @@ const FacultyDashboard = () => {
     { subject: 'Punctuality', score: fb.feedbackScores.punctuality },
     { subject: 'Engagement', score: fb.feedbackScores.studentEngagement },
   ])[0] || [];
+  const scoreGap = dashboard ? Number(((dashboard?.overallAverage || 0) - (dashboard?.departmentAverage || 0)).toFixed(2)) : 0;
+  const latestTrend = trend.length ? trend[trend.length - 1]?.averageScore : 0;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Faculty Dashboard</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">Your Performance Overview</p>
-      </div>
+      <PageHero
+        eyebrow="Faculty Insights"
+        title="Track your teaching performance with clearer momentum and benchmark signals."
+        description="You can now compare your current standing, latest semester trajectory, and feedback depth from a single view."
+        highlights={[
+          { label: 'Overall Score', value: dashboard?.overallAverage || 0 },
+          { label: 'Vs Department', value: `${scoreGap > 0 ? '+' : ''}${scoreGap}`, helper: 'difference from department average' },
+          { label: 'Latest Trend', value: latestTrend || 0, helper: 'most recent semester score' },
+        ]}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <motion.div
@@ -122,38 +132,32 @@ const FacultyDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="glass-card p-6"
-        >
-          <h3 className="text-xl font-semibold mb-6">Semester-wise Trend</h3>
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+          <ChartPanel title="Semester-wise Trend" subtitle="Follow performance movement across semesters.">
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={trend}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="semester" />
-              <YAxis domain={[0, 5]} />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+              <XAxis dataKey="semester" tickLine={false} axisLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+              <YAxis domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(15,23,42,0.12)' }} />
               <Line type="monotone" dataKey="averageScore" stroke="#3b82f6" strokeWidth={3} dot={{ r: 6 }} />
             </LineChart>
           </ResponsiveContainer>
+          </ChartPanel>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="glass-card p-6"
-        >
-          <h3 className="text-xl font-semibold mb-6">Performance Radar</h3>
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+          <ChartPanel title="Performance Radar" subtitle="Quick view of your strongest and weakest teaching dimensions.">
           <ResponsiveContainer width="100%" height={300}>
             <RadarChart data={radarData}>
-              <PolarGrid />
-              <PolarAngleAxis dataKey="subject" />
-              <PolarRadiusAxis domain={[0, 5]} />
+              <PolarGrid stroke="#e5e7eb" />
+              <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 12 }} />
+              <PolarRadiusAxis domain={[0, 5]} tick={false} axisLine={false} />
               <Radar name="Score" dataKey="score" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} />
-              <Tooltip />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(15,23,42,0.12)' }} />
             </RadarChart>
           </ResponsiveContainer>
+          </ChartPanel>
         </motion.div>
       </div>
 

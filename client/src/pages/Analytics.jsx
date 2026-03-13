@@ -4,6 +4,8 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Toolti
 import { Building2, Users, BookOpen, MessageSquare, TrendingUp, Award } from 'lucide-react';
 import { adminAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import PageHero from '../components/PageHero';
+import ChartPanel from '../components/ChartPanel';
 
 const Analytics = () => {
   const [analytics, setAnalytics] = useState([]);
@@ -36,15 +38,22 @@ const Analytics = () => {
   const totalCourses = analytics.reduce((sum, d) => sum + d.courseCount, 0);
   const totalFeedback = analytics.reduce((sum, d) => sum + d.feedbackCount, 0);
   const avgScore = analytics.length > 0 ? (analytics.reduce((sum, d) => sum + d.averageScore, 0) / analytics.length).toFixed(2) : 0;
+  const topDepartment = analytics.reduce((best, current) => (!best || current.averageScore > best.averageScore ? current : best), null);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">Department-wise performance overview</p>
-      </div>
+      <PageHero
+        eyebrow="Institution Analytics"
+        title="Compare departments with a sharper, decision-ready analytics view."
+        description="This dashboard now highlights coverage, teaching quality, and the strongest department signal in one place."
+        highlights={[
+          { label: 'Departments', value: analytics.length },
+          { label: 'Feedback Volume', value: totalFeedback },
+          { label: 'Top Department', value: topDepartment?.departmentName || 'N/A', helper: `${topDepartment?.averageScore || 0} avg score` },
+        ]}
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -99,22 +108,23 @@ const Analytics = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-6">
-          <h3 className="text-xl font-semibold mb-6">Department Performance</h3>
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+          <ChartPanel title="Department Performance" subtitle="Average score by department with a cleaner comparison scale.">
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={analytics}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="departmentName" />
-              <YAxis domain={[0, 5]} />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+              <XAxis dataKey="departmentName" tickLine={false} axisLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+              <YAxis domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(15,23,42,0.12)' }} />
               <Legend />
-              <Bar dataKey="averageScore" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="averageScore" fill="#3b82f6" radius={[10, 10, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+          </ChartPanel>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-6">
-          <h3 className="text-xl font-semibold mb-6">Faculty Distribution</h3>
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+          <ChartPanel title="Faculty Distribution" subtitle="Department share of faculty strength across the institution.">
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -131,9 +141,10 @@ const Analytics = () => {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(15,23,42,0.12)' }} />
             </PieChart>
           </ResponsiveContainer>
+          </ChartPanel>
         </motion.div>
       </div>
 

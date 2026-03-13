@@ -50,6 +50,7 @@ export const hodAPI = {
   publishForm: (id) => api.patch(`/hod/feedback-forms/${id}/publish`),
   getFormAnalytics: (formId, params) => api.get('/feedback', { params: { ...params, formId } }),
   deleteForm: (id) => api.delete(`/hod/feedback-forms/${id}`),
+  sendNotification: (data) => api.post('/hod/notify', data),
 };
 
 // Faculty APIs

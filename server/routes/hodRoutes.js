@@ -1,5 +1,5 @@
 import express from 'express';
-import { getDepartmentPerformance, getFacultyRanking, getLowPerformers, createFeedbackForm, publishFeedbackForm, deleteFeedbackForm, getFeedbackForms, getDepartmentFaculty } from '../controllers/hodController.js';
+import { getDepartmentPerformance, getFacultyRanking, getLowPerformers, createFeedbackForm, publishFeedbackForm, deleteFeedbackForm, getFeedbackForms, getDepartmentFaculty, sendNotificationToFaculty } from '../controllers/hodController.js';
 import { protect, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -14,5 +14,6 @@ router.post('/feedback-forms', createFeedbackForm);
 router.get('/feedback-forms', getFeedbackForms);
 router.patch('/feedback-forms/:id/publish', publishFeedbackForm);
 router.delete('/feedback-forms/:id', deleteFeedbackForm);
+router.post('/notify', sendNotificationToFaculty);
 
 export default router;

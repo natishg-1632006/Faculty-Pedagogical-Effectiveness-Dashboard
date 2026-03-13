@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Edit, Trash2, Power, RefreshCw, Search, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit, Trash2, Power, RefreshCw, Search, Eye, EyeOff, Users, ShieldCheck, Briefcase, UserCog } from 'lucide-react';
 import { adminAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import PageHero from '../components/PageHero';
+import ChartPanel from '../components/ChartPanel';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -15,6 +17,7 @@ const UserManagement = () => {
   const [showResetConfirmPassword, setShowResetConfirmPassword] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -121,36 +124,80 @@ const UserManagement = () => {
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = useMemo(() => users.filter(user => {
+    const matchesSearch =
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    return matchesSearch && matchesRole;
+  }), [users, searchTerm, roleFilter]);
+
+  const activeUsers = users.filter((user) => user.isActive).length;
+  const inactiveUsers = users.length - activeUsers;
+  const roleSummary = [
+    { label: 'Admins', value: users.filter((user) => user.role === 'Admin').length, icon: ShieldCheck, color: 'text-red-600' },
+    { label: 'HODs', value: users.filter((user) => user.role === 'HOD').length, icon: Briefcase, color: 'text-purple-600' },
+    { label: 'Faculty', value: users.filter((user) => user.role === 'Faculty').length, icon: Users, color: 'text-blue-600' },
+    { label: 'Active', value: activeUsers, icon: UserCog, color: 'text-emerald-600' },
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage system users and permissions</p>
-        </div>
-        <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2">
-          <Plus className="w-5 h-5" />
-          Add User
-        </button>
+      <PageHero
+        eyebrow="Identity Control"
+        title="Manage platform users with a cleaner admin workspace."
+        description="This page now surfaces user mix, active coverage, role filtering, and direct account operations in a more structured control panel."
+        highlights={[
+          { label: 'Total Users', value: users.length },
+          { label: 'Active Users', value: activeUsers },
+          { label: 'Inactive Users', value: inactiveUsers },
+        ]}
+        actions={
+          <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Add User
+          </button>
+        }
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {roleSummary.map((item) => (
+          <div key={item.label} className="glass-card p-5 bg-gradient-to-br from-white to-slate-50 dark:from-gray-800 dark:to-gray-800/60">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{item.label}</p>
+                <p className="mt-2 text-3xl font-black text-gray-900 dark:text-white">{item.value}</p>
+              </div>
+              <div className={`rounded-2xl bg-gray-100 dark:bg-gray-700 p-3 ${item.color}`}>
+                <item.icon className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div className="glass-card p-6">
-        <div className="mb-6">
-          <div className="relative">
+      <ChartPanel title="User Directory" subtitle="Search, filter, and manage accounts from a cleaner operations table.">
+        <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative flex-1 max-w-xl">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="px-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Roles</option>
+            <option value="Admin">Admin</option>
+            <option value="HOD">HOD</option>
+            <option value="Faculty">Faculty</option>
+          </select>
         </div>
 
         <div className="overflow-x-auto">
@@ -173,7 +220,14 @@ const UserManagement = () => {
                   animate={{ opacity: 1 }}
                   className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
-                  <td className="py-3 px-4">{user.name}</td>
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold">
+                        {user.name?.charAt(0)}
+                      </div>
+                      <span className="font-medium">{user.name}</span>
+                    </div>
+                  </td>
                   <td className="py-3 px-4">{user.email}</td>
                   <td className="py-3 px-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -239,8 +293,11 @@ const UserManagement = () => {
               ))}
             </tbody>
           </table>
+          {filteredUsers.length === 0 && (
+            <div className="py-12 text-center text-gray-500">No users match the current search or role filter.</div>
+          )}
         </div>
-      </div>
+      </ChartPanel>
 
       {/* Modal */}
       {showModal && (

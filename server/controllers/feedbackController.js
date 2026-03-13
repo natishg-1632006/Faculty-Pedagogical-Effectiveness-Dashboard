@@ -3,6 +3,7 @@ import PerformanceMetrics from '../models/PerformanceMetrics.js';
 import Notification from '../models/Notification.js';
 import FeedbackForm from '../models/FeedbackForm.js';
 import Course from '../models/Course.js';
+import mongoose from 'mongoose';
 
 export const submitFeedback = async (req, res) => {
   try {
@@ -50,7 +51,9 @@ export const getAllFeedbacks = async (req, res) => {
     const { formId, facultyId, semester } = req.query;
     const query = {};
 
-    if (formId) query.formId = formId;
+    if (formId) {
+      query.formId = mongoose.Types.ObjectId.isValid(formId) ? new mongoose.Types.ObjectId(formId) : formId;
+    }
     if (facultyId) query.facultyId = facultyId;
     if (semester) query.semester = semester;
 
@@ -118,13 +121,14 @@ export const submitStudentFeedback = async (req, res) => {
       : 0;
 
     // Create feedback scores object
-    const feedbackScores = {
-      contentKnowledge: ratingResponses[0]?.value || 5,
-      teachingMethodology: ratingResponses[1]?.value || 5,
-      communication: ratingResponses[2]?.value || 5,
-      punctuality: ratingResponses[3]?.value || 5,
-      studentEngagement: ratingResponses[4]?.value || 5
-    };
+    const feedbackScores = {};
+    const legacyKeys = ['contentKnowledge', 'teachingMethodology', 'communication', 'punctuality', 'studentEngagement'];
+    
+    ratingResponses.forEach((r, idx) => {
+      // Use legacy keys for first 5 to maintain compatibility with other dashboards
+      const key = idx < legacyKeys.length ? legacyKeys[idx] : idx.toString();
+      feedbackScores[key] = r.value;
+    });
 
     const textResponse = responses.find(r => r.type === 'text');
 

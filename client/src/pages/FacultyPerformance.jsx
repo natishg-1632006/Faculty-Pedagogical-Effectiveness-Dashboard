@@ -4,6 +4,8 @@ import { BarChart, Bar, LineChart, Line, RadarChart, Radar, PolarGrid, PolarAngl
 import { TrendingUp, TrendingDown, Award, Target, BookOpen, MessageSquare } from 'lucide-react';
 import { facultyAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import PageHero from '../components/PageHero';
+import ChartPanel from '../components/ChartPanel';
 
 const FacultyPerformance = () => {
   const [dashboard, setDashboard] = useState(null);
@@ -45,13 +47,21 @@ const FacultyPerformance = () => {
     score: p.score,
     fullMark: 5
   })) || [];
+  const strongestParameter = radarData.reduce((best, current) => (current.score > (best?.score ?? -1) ? current : best), null);
+  const recentSemester = semesterTrend.length ? semesterTrend[semesterTrend.length - 1]?.score : 0;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">My Performance</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">Track your teaching effectiveness</p>
-      </div>
+      <PageHero
+        eyebrow="Personal Performance"
+        title="Review your teaching quality with stronger visual signals and focused insight."
+        description="This page now highlights your strongest parameter, current semester level, and score position with a cleaner chart system."
+        highlights={[
+          { label: 'Overall Score', value: dashboard?.overallScore || 0 },
+          { label: 'Strongest Skill', value: strongestParameter?.parameter || 'N/A', helper: strongestParameter ? `${strongestParameter.score}/5` : 'no parameter data' },
+          { label: 'Recent Semester', value: recentSemester || 0 },
+        ]}
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -106,46 +116,49 @@ const FacultyPerformance = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-6">
-          <h3 className="text-xl font-semibold mb-6">Parameter-wise Performance</h3>
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+          <ChartPanel title="Parameter-wise Performance" subtitle="Dimension-level breakdown of your teaching effectiveness.">
           <ResponsiveContainer width="100%" height={300}>
             <RadarChart data={radarData}>
-              <PolarGrid />
-              <PolarAngleAxis dataKey="parameter" />
-              <PolarRadiusAxis domain={[0, 5]} />
+              <PolarGrid stroke="#e5e7eb" />
+              <PolarAngleAxis dataKey="parameter" tick={{ fill: '#6b7280', fontSize: 12 }} />
+              <PolarRadiusAxis domain={[0, 5]} tick={false} axisLine={false} />
               <Radar name="Score" dataKey="score" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} />
-              <Tooltip />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(15,23,42,0.12)' }} />
             </RadarChart>
           </ResponsiveContainer>
+          </ChartPanel>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-6">
-          <h3 className="text-xl font-semibold mb-6">Semester-wise Trend</h3>
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+          <ChartPanel title="Semester-wise Trend" subtitle="Performance movement over time with smoother visual emphasis.">
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={semesterTrend}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="semester" />
-              <YAxis domain={[0, 5]} />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+              <XAxis dataKey="semester" tickLine={false} axisLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+              <YAxis domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(15,23,42,0.12)' }} />
               <Legend />
               <Line type="monotone" dataKey="score" stroke="#3b82f6" strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
+          </ChartPanel>
         </motion.div>
       </div>
 
       {/* Subject Performance */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6">
-        <h3 className="text-xl font-semibold mb-6">Subject-wise Performance</h3>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <ChartPanel title="Subject-wise Performance" subtitle="Course-level performance comparison with clearer chart styling.">
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={subjectPerformance}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="courseName" />
-            <YAxis domain={[0, 5]} />
-            <Tooltip />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+            <XAxis dataKey="courseName" tickLine={false} axisLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+            <YAxis domain={[0, 5]} tickLine={false} axisLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(15,23,42,0.12)' }} />
             <Bar dataKey="averageScore" fill="#3b82f6" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
+        </ChartPanel>
       </motion.div>
 
       {/* Improvement Suggestions */}

@@ -102,6 +102,54 @@ export const getLowPerformers = async (req, res) => {
   }
 };
 
+export const getFacultyDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const faculty = await User.findById(id).select('name email');
+    if (!faculty) {
+      return res.status(404).json({ message: 'Faculty not found' });
+    }
+
+    const feedbacks = await StudentFeedback.find({ facultyId: id }).sort({ submittedAt: -1 });
+
+    const parameterScores = {
+      contentKnowledge: 0,
+      teachingMethodology: 0,
+      communication: 0,
+      punctuality: 0,
+      studentEngagement: 0,
+    };
+    const paramCounts = { ...parameterScores };
+
+    feedbacks.forEach(fb => {
+      for (const key in parameterScores) {
+        if (fb.feedbackScores && typeof fb.feedbackScores[key] === 'number') {
+          parameterScores[key] += fb.feedbackScores[key];
+          paramCounts[key]++;
+        }
+      }
+    });
+
+    const radarData = Object.keys(parameterScores).map(key => {
+        let readableKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+        if (readableKey === "Content Knowledge") readableKey = "Knowledge";
+        if (readableKey === "Teaching Methodology") readableKey = "Methodology";
+        if (readableKey === "Student Engagement") readableKey = "Engagement";
+        if (readableKey === "Communication") readableKey = "Comm.";
+        return {
+            parameter: readableKey,
+            score: paramCounts[key] > 0 ? parseFloat((parameterScores[key] / paramCounts[key]).toFixed(2)) : 0,
+        }
+    });
+
+    const recentComments = feedbacks.filter(fb => fb.comment && fb.comment.trim() !== '').slice(0, 3).map(fb => ({ comment: fb.comment, submittedAt: fb.submittedAt }));
+
+    res.json({ faculty, radarData, recentComments });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const createFeedbackForm = async (req, res) => {
   try {
     const hod = await User.findById(req.user._id).populate('departmentId');
@@ -124,6 +172,18 @@ export const createFeedbackForm = async (req, res) => {
     });
 
     res.status(201).json({ message: 'Feedback form created', form });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getFormAnalytics = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const feedbacks = await StudentFeedback.find({ formId: id })
+      .populate('facultyId', 'name email')
+      .sort('-createdAt');
+    res.json(feedbacks);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -180,6 +240,37 @@ export const getDepartmentFaculty = async (req, res) => {
       role: 'Faculty' 
     }).select('name email');
     res.json(faculty);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const sendNotificationToFaculty = async (req, res) => {
+  try {
+    const { recipientType, facultyIds, message } = req.body;
+    const hod = await User.findById(req.user._id);
+    
+    if (!message) {
+      return res.status(400).json({ message: 'Message is required' });
+    }
+
+    let targetUserIds = [];
+
+    if (recipientType === 'all') {
+      const faculty = await User.find({ departmentId: hod.departmentId, role: 'Faculty' });
+      targetUserIds = faculty.map(f => f._id);
+    } else if (recipientType === 'specific' && Array.isArray(facultyIds)) {
+      // Ensure selected faculty belong to the HOD's department
+      const faculty = await User.find({ _id: { $in: facultyIds }, departmentId: hod.departmentId, role: 'Faculty' });
+      targetUserIds = faculty.map(f => f._id);
+    }
+
+    if (targetUserIds.length > 0) {
+      const notifications = targetUserIds.map(userId => ({ userId, message, type: 'info', createdAt: new Date() }));
+      await Notification.insertMany(notifications);
+    }
+
+    res.json({ message: `Notification sent to ${targetUserIds.length} faculty members` });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
