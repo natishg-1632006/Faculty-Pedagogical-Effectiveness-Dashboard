@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext();
+const API_URL = (import.meta.env.VITE_API_URL || 'https://faculty-pedagogical-effectiveness.onrender.com') + '/api';
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -21,7 +22,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const { data } = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+    const { data } = await axios.post(`${API_URL}/auth/login`, { email, password });
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
@@ -37,7 +38,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const changePassword = async (currentPassword, newPassword) => {
-    await axios.post('http://localhost:5000/api/auth/change-password', {
+    await axios.post(`${API_URL}/auth/change-password`, {
       currentPassword,
       newPassword
     });
