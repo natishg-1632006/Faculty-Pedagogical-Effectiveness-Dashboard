@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const API_URL = (import.meta.env.VITE_API_URL || 'https://faculty-pedagogical-effectiveness-tn7x.onrender.com') + '/api';
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim().replace(/\/$/, '');
+const API_URL = configuredApiUrl
+  ? `${configuredApiUrl}/api`
+  : import.meta.env.DEV
+    ? '/api'
+    : 'https://faculty-pedagogical-effectiveness-tn7x.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
