@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext();
-const API_URL = (import.meta.env.VITE_API_URL || 'https://faculty-pedagogical-effectiveness.onrender.com') + '/api';
+const API_URL = (import.meta.env.VITE_API_URL || 'https://faculty-pedagogical-effectiveness-tn7x.onrender.com') + '/api';
 
 export const useAuth = () => useContext(AuthContext);
 
