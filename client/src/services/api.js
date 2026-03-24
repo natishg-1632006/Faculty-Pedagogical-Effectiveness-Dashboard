@@ -48,6 +48,7 @@ export const adminAPI = {
 export const hodAPI = {
   getDepartmentPerformance: () => api.get('/hod/department-performance'),
   getFacultyRanking: (semester) => api.get('/hod/faculty-ranking', { params: { semester } }),
+  getFacultyDetails: (id) => api.get(`/hod/faculty/${id}`),
   getLowPerformers: () => api.get('/hod/low-performers'),
   getDepartmentFaculty: () => api.get('/hod/department-faculty'),
   createFeedbackForm: (data) => api.post('/hod/feedback-forms', data),
