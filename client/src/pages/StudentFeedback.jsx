@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Star, Filter } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { commonAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const StudentFeedback = () => {
+  const [searchParams] = useSearchParams();
   const [forms, setForms] = useState([]);
   const [selectedForm, setSelectedForm] = useState(null);
   const [selectedFaculty, setSelectedFaculty] = useState('');
@@ -49,13 +51,12 @@ const StudentFeedback = () => {
   }, []);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const formId = params.get('form');
+    const formId = searchParams.get('form');
     if (formId && forms.length > 0) {
       const form = forms.find(f => f._id === formId);
       if (form) setSelectedForm(form);
     }
-  }, [forms]);
+  }, [forms, searchParams]);
 
   useEffect(() => {
     setSubmittedFaculty([]);

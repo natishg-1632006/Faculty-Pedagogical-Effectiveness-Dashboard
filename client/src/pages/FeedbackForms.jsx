@@ -87,7 +87,7 @@ const FeedbackForms = () => {
   };
 
   const copyShareLink = (formId) => {
-    const link = `${window.location.origin}/student-feedback?form=${formId}`;
+    const link = `${window.location.origin}${window.location.pathname}#/student-feedback?form=${formId}`;
     navigator.clipboard.writeText(link);
     setCopied(formId);
     toast.success('Link copied to clipboard!');
